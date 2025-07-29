@@ -1,0 +1,165 @@
+#include <iostream> // library  for cout
+#include <fstream> // library to read files
+#include <cctype>//   library to check characters
+#include <string> // library for the string type
+
+using namespace std; / it allows me to skipn writing std
+
+/* Character classes */
+#define LETTER 0
+#define DIGIT 1
+#define UNKNOWN 99
+#define EOF_FLAG -1
+
+/* Token codes */
+#define INT_LIT 10
+#define IDENT 11
+#define ASSIGN_OP 20
+#define ADD_OP 21
+#define SUB_OP 22
+#define MULT_OP 23
+#define DIV_OP 24
+#define LEFT_PAREN 25
+#define RIGHT_PAREN 26
+
+/* Global variables */
+int charClass;// stores the type of the current character
+string lexeme;// holds the sequence of characters forming a word or number 
+char nextChar;// stores the next character read from the input file. 
+int token; //  current token code identified by the lexical analyzer
+int nextToken;// the next token to be processed
+ifstream in_fp;
+
+/* Function declarations */
+void addChar();// adds the current character nextChar to the lexeme string
+void getChar();// reads the next character from the input file and sets its character class
+
+
+void getNonBlank();// a non-space character is found
+int lex();
+int lookup(char ch);
+
+/* addChar - adds nextChar to lexeme */
+void addChar() {
+    if (lexeme.length() < 98) {  / if lexeme is not long
+        lexeme += nextChar; // add the current character to the lexeme string 
+    }
+    else { // If lexeme is too long, show error message
+        cout << "Error - lexeme is too long" << endl;
+    }
+}
+
+/* getChar - reads the next character and sets charClass */
+void getChar() {
+    if (in_fp.get(nextChar)) { // read next character from file
+        if (isalpha(nextChar)) // If letter  set  the charclass= letter
+        charClass = LETTER; // if digit set the charclass = unknown 
+        else if (isdigit(nextChar))
+            charClass = DIGIT;
+        else
+            charClass = UNKNOWN;
+    }
+    else {
+        charClass = EOF_FLAG;
+    }
+}
+
+/* getNonBlank - skips whitespace */
+void getNonBlank() {
+    while (isspace(nextChar)) { // Check if current character is a space or tab
+        getChar();// until a non-space character is found
+    }
+}
+
+/* lookup - recognizes operators and parentheses */
+int lookup(char ch) {
+    switch (ch) {   / uses switch to check character type
+    case '(':
+        addChar();// to store the character
+        nextToken = LEFT_PAREN;
+        break;
+    case ')':
+        addChar();
+        nextToken = RIGHT_PAREN;
+        break;
+    case '+':
+        addChar();
+        nextToken = ADD_OP;
+        break;
+    case '-':
+        addChar();
+        nextToken = SUB_OP;
+        break;
+    case '*':
+        addChar();
+        nextToken = MULT_OP;
+        break;
+    case '/':
+        addChar();
+        nextToken = DIV_OP;
+        break;
+    default:
+        addChar();
+        nextToken = EOF_FLAG;
+        break;
+    }
+    return nextToken;
+}
+
+/* lex - lexical analyzer for arithmetic expressions */
+int lex() {
+    lexeme = "";// Clear previous lexeme before starting
+    getNonBlank();// skip 
+
+    switch (charClass) { // Check the character class
+    case LETTER:
+        addChar();
+        getChar();
+        while (charClass == LETTER || charClass == DIGIT) {
+            addChar();
+            getChar();
+        }
+        nextToken = IDENT;
+        break;
+
+    case DIGIT:
+        addChar();
+        getChar();
+        while (charClass == DIGIT) {
+            addChar();
+            getChar();
+        }
+        nextToken = INT_LIT;
+        break;
+
+    case UNKNOWN:
+        lookup(nextChar);//  uses to detect operator or parenthesis
+        getChar();
+        break;
+
+    case EOF_FLAG:
+        nextToken = EOF_FLAG;
+        lexeme = "EOF";
+        break;
+    }
+
+    cout << "Next token is: " << nextToken << ", Next lexeme is " << lexeme << endl;
+    return nextToken;
+}
+
+/* main driver */
+int main() {
+    in_fp.open("front.in");
+    if (!in_fp) {
+        cout << "ERROR - cannot open front.in" << endl;
+        return 1;
+    }
+    else {
+        getChar();
+        do {
+            lex();
+        } while (nextToken != EOF_FLAG);
+    }
+    in_fp.close();
+    return 0;
+1.	}
